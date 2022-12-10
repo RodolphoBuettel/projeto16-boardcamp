@@ -8,18 +8,9 @@ export async function createCategoryValidation(req, res, next){
         return;
     }
 
-    try {
-        const categories = await connection.query("SELECT * FROM categories");
-        const categoriesArr = categories.rows;
-        for (let i = 0; i < categoriesArr.length; i++) {
-            if (categoriesArr[i].name === name) {
-                res.sendStatus(409);
-                return;
-            }
-        }
-
-    } catch (error) {
-        console.log(error);
+    const categoryExist = await connection.query("SELECT * FROM categories WHERE name = $1", [name]);
+    if(categoryExist.rows[0]){
+        return res.sendStatus(409);
     }
 
     req.name = name;
