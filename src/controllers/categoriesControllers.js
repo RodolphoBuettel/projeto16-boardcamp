@@ -8,7 +8,6 @@ export async function listCategories(req, res) {
 export async function createCategory(req, res) {
     const name = req.name;
 
-   
     const category = await connection.query("INSERT INTO categories (name) VALUES ($1)",
         [name]);
 

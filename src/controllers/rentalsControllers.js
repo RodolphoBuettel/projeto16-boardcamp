@@ -13,7 +13,7 @@ export async function createRental(req, res) {
         return res.sendStatus(400);
     }
 
-    if(daysRented < 0){
+    if (daysRented < 0) {
         return res.sendStatus(400);
     }
 
@@ -32,24 +32,26 @@ export async function createRental(req, res) {
     const createRental = await connection.query(`INSERT INTO rentals
      ("customerId", "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee")
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [customerId, gameId, today, daysRented, returnDate, rentPrice, delayFee]);
+        [customerId, gameId, today, daysRented, returnDate, rentPrice, delayFee]);
     res.send(createRental.rows);
 }
 
-export async function listRentals(req, res){
-    const rentals = await connection.query("SELECT * FROM rentals");
+export async function listRentals(req, res) {
+    const rentals = await connection.query(`SELECT * FROM rentals
+    `);
+
     res.send(rentals.rows);
 }
 
-export async function deleteRentals(req, res){
-    const {id} = req.params;
+export async function deleteRentals(req, res) {
+    const { id } = req.params;
 
     const idExist = await connection.query("SELECT * FROM rentals WHERE id = $1", [id]);
-    if(!idExist.rows[0]){
+    if (!idExist.rows[0]) {
         return res.sendStatus(400);
     }
 
-    if(idExist.rows[0].returnDate === null){
+    if (idExist.rows[0].returnDate === null) {
         return res.sendStatus(400);
     }
 
@@ -57,22 +59,33 @@ export async function deleteRentals(req, res){
     res.send(200);
 }
 
-export async function finalizeRent(req, res){
-    const {id} = req.params;
+export async function finalizeRent(req, res) {
+    const { id } = req.params;
 
     const rentExist = await connection.query("SELECT * FROM rentals WHERE id = $1", [id]);
-    if(!rentExist.rows[0]){
+    if (!rentExist.rows[0]) {
         return res.sendStatus(400);
     }
 
-    if(rentExist.rows[0].returnDate !== null){
+    if (rentExist.rows[0].returnDate !== null) {
         return res.sendStatus(400);
     }
+
+    console.log(rentExist.rows[0].rentDate);
 
     const timeElapsed = Date.now();
     const today = new Date(timeElapsed);
-    today.toLocaleDateString();
 
-    const finalizeRent = await connection.query(`UPDATE rentals SET "returnDate" = $1 WHERE id = $2`, [today, id]);
+    const diffInMs = new Date(rentExist.rows[0].rentDate) - new Date(today);
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    let delayFee = 0; 
+
+    if(diffInDays > rentExist.rows[0].daysRented){
+        delayFee = pricePerDay * diffInDays;
+    }
+
+    const returnDate = await connection.query(`UPDATE rentals SET "returnDate" = $1  WHERE id = $2`, [today, id]);
+    const fees = await connection.query(`UPDATE rentals SET "delayFee" = $1 WHERE id = $2`, [delayFee, id]);
     res.send(200);
 }
