@@ -110,6 +110,7 @@ export async function finalizeRent(req, res) {
 
     const gameExist = await connection.query(`SELECT * FROM games WHERE id = $1`, [rentExist.rows[0].gameId]);
     const stockGame = gameExist.rows[0].stockTotal;
+    const pricePerDay =  gameExist.rows[0].pricePerDay;
 
     const timeElapsed = Date.now();
     const today = new Date(timeElapsed);
