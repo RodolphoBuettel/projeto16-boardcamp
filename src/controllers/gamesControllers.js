@@ -30,6 +30,11 @@ export async function creatGame(req, res) {
         return res.status(422).send(errors);
     }
 
+    const nameExist = await connection.query("SELECT * FROM games WHERE name = $1", [name]);
+    if(nameExist.rows[0]){
+        return res.sendStatus(409);
+    }
+
     try {
         const categories = await connection.query("SELECT * FROM categories");
         const categoriesArr = categories.rows;
